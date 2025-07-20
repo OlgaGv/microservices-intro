@@ -7,7 +7,8 @@ services:
             POSTGRES_PASSWORD: postgres
         ports:
             - "5432:5432"  # Maps container port 5432 to host port 5432
-
+        networks:
+            - ms_bridge
     song-db:
         image: postgres:17-alpine
         environment:
@@ -16,3 +17,9 @@ services:
             POSTGRES_PASSWORD: postgres
         ports:
             - "5433:5432"  # Maps container port 5432 to host port 5433 (to avoid conflict)
+        networks:
+            - ms_bridge
+
+networks:
+    ms_bridge:
+        external: true

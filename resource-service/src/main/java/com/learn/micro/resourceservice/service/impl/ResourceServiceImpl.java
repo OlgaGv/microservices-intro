@@ -35,7 +35,7 @@ import lombok.AllArgsConstructor;
 @Service
 public class ResourceServiceImpl implements ResourceService {
 
-    private static final String SONG_SERVICE_URI = "http://localhost:8072";
+    private static final String SONG_SERVICE_URI = "http://song-service:8080";
     private final ResourceRepository resourceRepository;
     private final RestTemplate restTemplate;
     private final ResourceMapper resourceMapper;

@@ -9,6 +9,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+import lombok.RequiredArgsConstructor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.rest.webmvc.ResourceNotFoundException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -29,18 +33,18 @@ import com.learn.micro.resourceservice.service.MessageHelper;
 import com.learn.micro.resourceservice.service.ResourceProcessor;
 import com.learn.micro.resourceservice.service.ResourceService;
 
-import lombok.AllArgsConstructor;
-
-@AllArgsConstructor
+@RequiredArgsConstructor
 @Service
 public class ResourceServiceImpl implements ResourceService {
 
-    private static final String SONG_SERVICE_URI = "http://song-service:8080";
+    private static final Logger LOGGER = LoggerFactory.getLogger(ResourceServiceImpl.class);
     private final ResourceRepository resourceRepository;
     private final RestTemplate restTemplate;
     private final ResourceMapper resourceMapper;
     private final ResourceProcessor resourceProcessor;
     private final MessageHelper messageHelper;
+    @Value("${song-service.uri}")
+    private String songServiceUri;
 
     @Override
     public GetResourceResponse findById(String id) {
@@ -124,7 +128,8 @@ public class ResourceServiceImpl implements ResourceService {
     }
 
     private ResponseEntity<?> sendMetadata(ResourceMetadataDto songMetadata) {
-        return restTemplate.postForEntity(SONG_SERVICE_URI + "/songs", songMetadata, ResourceMetadataDto.class);
+        LOGGER.info("Saving song metadata to song-db using URI {}", songServiceUri);
+        return restTemplate.postForEntity(songServiceUri + "/songs", songMetadata, ResourceMetadataDto.class);
     }
 
     private void deleteMetadata(List<Integer> deletedIds) {
@@ -134,6 +139,7 @@ public class ResourceServiceImpl implements ResourceService {
                 .collect(Collectors.joining(","));
         Map<String, String> urlParams = new HashMap<>();
         urlParams.put("id", idToDeleteMetadata);
-        restTemplate.delete(SONG_SERVICE_URI + "/songs?id={id}", urlParams);
+        LOGGER.info("Deleting song metadata from song-db using URI {}", songServiceUri);
+        restTemplate.delete(songServiceUri + "/songs?id={id}", urlParams);
     }
 }

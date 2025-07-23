@@ -7,12 +7,12 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 import lombok.RequiredArgsConstructor;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Value;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.cloud.client.ServiceInstance;
 import org.springframework.data.rest.webmvc.ResourceNotFoundException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -20,7 +20,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
-
+import org.springframework.cloud.client.discovery.DiscoveryClient;
 
 import com.learn.micro.resourceservice.entity.ResourceEntity;
 import com.learn.micro.resourceservice.exception.GeneralFailureException;
@@ -33,18 +33,18 @@ import com.learn.micro.resourceservice.service.MessageHelper;
 import com.learn.micro.resourceservice.service.ResourceProcessor;
 import com.learn.micro.resourceservice.service.ResourceService;
 
+@Slf4j
 @RequiredArgsConstructor
 @Service
 public class ResourceServiceImpl implements ResourceService {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(ResourceServiceImpl.class);
+    private final static String SONG_SERVICE = "song-service";
     private final ResourceRepository resourceRepository;
     private final RestTemplate restTemplate;
     private final ResourceMapper resourceMapper;
     private final ResourceProcessor resourceProcessor;
     private final MessageHelper messageHelper;
-    @Value("${song-service.uri}")
-    private String songServiceUri;
+    private final DiscoveryClient discoveryClient;
 
     @Override
     public GetResourceResponse findById(String id) {
@@ -128,8 +128,9 @@ public class ResourceServiceImpl implements ResourceService {
     }
 
     private ResponseEntity<?> sendMetadata(ResourceMetadataDto songMetadata) {
-        LOGGER.info("Saving song metadata to song-db using URI {}", songServiceUri);
-        return restTemplate.postForEntity(songServiceUri + "/songs", songMetadata, ResourceMetadataDto.class);
+        ServiceInstance songService = getSongServiceInstance();
+        log.info("Saving song metadata to song-db using URI {}", songService.getUri());
+        return restTemplate.postForEntity(songService.getUri() + "/songs", songMetadata, ResourceMetadataDto.class);
     }
 
     private void deleteMetadata(List<Integer> deletedIds) {
@@ -139,7 +140,17 @@ public class ResourceServiceImpl implements ResourceService {
                 .collect(Collectors.joining(","));
         Map<String, String> urlParams = new HashMap<>();
         urlParams.put("id", idToDeleteMetadata);
-        LOGGER.info("Deleting song metadata from song-db using URI {}", songServiceUri);
-        restTemplate.delete(songServiceUri + "/songs?id={id}", urlParams);
+        ServiceInstance songService = getSongServiceInstance();
+        log.info("Deleting song metadata from song-db using URI {}", songService.getUri());
+        restTemplate.delete(songService.getUri() + "/songs?id={id}", urlParams);
+    }
+
+    private ServiceInstance getSongServiceInstance() {
+        return Optional.ofNullable(discoveryClient.getInstances(SONG_SERVICE))
+            .filter(instances -> !instances.isEmpty())
+            .map(instances -> instances.get(0))
+            .orElseThrow(() -> new GeneralFailureException(
+                MessageFormat.format(messageHelper.getMessage("server.error.no.service"),
+                    SONG_SERVICE)));
     }
 }

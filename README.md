@@ -24,7 +24,7 @@ The application includes:
     - PersistentVolumeClaim
 
 ## Project Structure
-
+```
 microservices-intro-master/
 ├── deployment/
 │   ├── app/ 
@@ -45,4 +45,4 @@ microservices-intro-master/
 ├── eureka/
 ├── resources-service/
 ├── songs-service/
-└──README.md
+└──README.md```

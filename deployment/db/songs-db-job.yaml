@@ -1,0 +1,48 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: db-update
+  namespace: k8s-program
+spec:
+  template:
+    metadata:
+      labels:
+        app: db-update
+    spec:
+      restartPolicy: Never
+      containers:
+        - name: psql
+          image: postgres:17-alpine
+          env:
+            - name: POSTGRES_USER
+              valueFrom:
+                secretKeyRef:
+                  name: db-secret
+                  key: POSTGRES_USER
+            - name: PGPASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: db-secret
+                  key: POSTGRES_PASSWORD
+            - name: POSTGRES_DB
+              valueFrom:
+                configMapKeyRef:
+                  name: songs-db-config
+                  key: POSTGRES_DB
+          command:
+            - sh
+            - -c
+            - |
+              until pg_isready -h songs-db -U "$POSTGRES_USER"; do sleep 2; done;
+              echo "Running DB migration..."
+              psql -h songs-db -U "$POSTGRES_USER" -d "$POSTGRES_DB" -f /scripts/update.sql
+          volumeMounts:
+            - name: scripts
+              mountPath: /scripts
+      volumes:
+        - name: scripts
+          configMap:
+            name: songs-db-config
+            items:
+              - key: update.sql
+                path: update.sql

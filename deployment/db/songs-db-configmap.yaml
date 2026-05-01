@@ -1,0 +1,19 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: songs-db-config
+  namespace: k8s-program
+data:
+  POSTGRES_DB: songs_db
+  init.sql: |
+    CREATE TABLE songs (
+        id SERIAL PRIMARY KEY,
+        name VARCHAR,
+        artist VARCHAR,
+        album VARCHAR,
+        length VARCHAR,
+        resource_id INTEGER NOT NULL UNIQUE,
+        year VARCHAR
+    );
+  update.sql: |
+    ALTER TABLE songs ADD COLUMN IF NOT EXISTS genre VARCHAR;

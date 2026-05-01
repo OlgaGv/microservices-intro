@@ -1,0 +1,91 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: resources-ms
+  namespace: k8s-program
+spec:
+  replicas: 2
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 1
+      maxSurge: 1
+  selector:
+    matchLabels:
+      app: resources-ms
+  template:
+    metadata:
+      labels:
+        app: resources-ms
+    spec:
+      containers:
+        - name: resources-ms
+          image: resources-image:v3
+          imagePullPolicy: Never
+          ports:
+            - containerPort: 8080
+          env:
+            - name: RESOURCES_MS_PORT
+              valueFrom:
+                configMapKeyRef:
+                  name: resources-ms-config
+                  key: RESOURCES_MS_PORT
+            - name: RESOURCES_DB_URL
+              valueFrom:
+                configMapKeyRef:
+                  name: resources-ms-config
+                  key: RESOURCES_DB_URL
+            - name: RESOURCES_DB_PORT
+              valueFrom:
+                configMapKeyRef:
+                  name: resources-ms-config
+                  key: RESOURCES_DB_PORT
+            - name: SONGS_MS_URL
+              valueFrom:
+                configMapKeyRef:
+                  name: resources-ms-config
+                  key: SONGS_MS_URL
+            - name: SONGS_MS_PORT
+              valueFrom:
+                configMapKeyRef:
+                  name: resources-ms-config
+                  key: SONGS_MS_PORT
+            - name: EUREKA_URI
+              valueFrom:
+                configMapKeyRef:
+                  name: resources-ms-config
+                  key: EUREKA_URI
+          startupProbe:
+            httpGet:
+              path: /actuator/health
+              port: 8080
+            failureThreshold: 30
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /actuator/health/liveness
+              port: 8080
+            initialDelaySeconds: 20
+            periodSeconds: 10
+          readinessProbe:
+            httpGet:
+              path: /actuator/health/readiness
+              port: 8080
+            initialDelaySeconds: 10
+            periodSeconds: 5
+            timeoutSeconds: 2
+            failureThreshold: 3
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: resources-ms
+  namespace: k8s-program
+spec:
+  type: NodePort
+  selector:
+    app: resources-ms
+  ports:
+    - port: 8080
+      targetPort: 8080
+      nodePort: 30080  # NodePort for external testing

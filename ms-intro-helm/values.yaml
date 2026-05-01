@@ -1,0 +1,18 @@
+# Default values for msintro.
+namespace: k8s-program
+replicaCount: 2
+
+resourcesMs:
+  image:
+    name: resources-image
+    tag: v3
+
+songsMs:
+  image:
+    name: songs-image
+    tag: v3
+
+eurekaMs:
+  image:
+    name: eureka-server-image
+    tag: v3

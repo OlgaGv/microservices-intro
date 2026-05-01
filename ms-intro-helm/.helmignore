@@ -1,0 +1,23 @@
+# OS files
+.DS_Store
+
+# VCS
+.git/
+.gitignore
+
+# IDE
+.idea/
+.project
+*.tmproj
+
+# Temporary / backup
+*.swp
+*.bak
+*.tmp
+*.orig
+*~
+
+# Build artifacts
+build/
+dist/
+target/

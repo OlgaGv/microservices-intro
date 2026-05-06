@@ -1,0 +1,14 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: resources-db-config
+  namespace: {{ .Values.namespace }}
+  labels:
+    {{- include "microservices.labels" . | nindent 4 }}
+data:
+  POSTGRES_DB: resources_db
+  init.sql: |
+    CREATE TABLE resources (
+        id SERIAL PRIMARY KEY,
+        blob BYTEA
+    );

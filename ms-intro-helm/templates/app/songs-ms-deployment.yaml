@@ -1,0 +1,69 @@
+{{- $svc := .Values.songsMs }}
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: songs-ms
+  namespace: {{ .Values.namespace }}
+spec:
+  replicas: {{ .Values.replicaCount }}
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 1
+      maxSurge: 1
+  selector:
+    matchLabels:
+      app: songs-ms
+  template:
+    metadata:
+      labels:
+        app: songs-ms
+    spec:
+      containers:
+        - name: songs-ms
+          image: {{ $svc.image.name }}:{{ $svc.image.tag }}
+          imagePullPolicy: Never
+          ports:
+            - containerPort: 8081
+          env:
+            - name: SONGS_MS_PORT
+              valueFrom:
+                configMapKeyRef:
+                  name: songs-ms-config
+                  key: SONGS_MS_PORT
+            - name: SONGS_DB_URL
+              valueFrom:
+                configMapKeyRef:
+                  name: songs-ms-config
+                  key: SONGS_DB_URL
+            - name: SONGS_DB_PORT
+              valueFrom:
+                configMapKeyRef:
+                  name: songs-ms-config
+                  key: SONGS_DB_PORT
+            - name: EUREKA_URI
+              valueFrom:
+                configMapKeyRef:
+                  name: songs-ms-config
+                  key: EUREKA_URI
+          startupProbe:
+            httpGet:
+              path: /actuator/health
+              port: 8081
+            failureThreshold: 30
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /actuator/health/liveness
+              port: 8081
+            initialDelaySeconds: 20
+            periodSeconds: 10
+          readinessProbe:
+            httpGet:
+              path: /actuator/health/readiness
+              port: 8081
+            initialDelaySeconds: 10
+            periodSeconds: 5
+            timeoutSeconds: 2
+            failureThreshold: 3

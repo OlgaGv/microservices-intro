@@ -1,0 +1,31 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: ms-ingress
+  namespace: {{ .Values.namespace }}
+  annotations:
+    nginx.ingress.kubernetes.io/use-regex: "true"
+    nginx.ingress.kubernetes.io/rewrite-target: /$1
+    nginx.ingress.kubernetes.io/proxy-body-size: "8m"
+spec:
+  ingressClassName: nginx
+  rules:
+    - host: localhost
+      http:
+        paths:
+          # Songs service
+          - path: /api/v1/(songs(/|$)(.*))
+            pathType: ImplementationSpecific
+            backend:
+              service:
+                name: songs-ms
+                port:
+                  number: 8081
+          # Resources service
+          - path: /api/v1/(resources(/|$)(.*))
+            pathType: ImplementationSpecific
+            backend:
+              service:
+                name: resources-ms
+                port:
+                  number: 8080

@@ -4,7 +4,7 @@ metadata:
   name: songs-ms
   namespace: {{ .Values.namespace }}
 spec:
-  type: NodePort
+  type: ClusterIP
   selector:
     app: songs-ms
   ports:

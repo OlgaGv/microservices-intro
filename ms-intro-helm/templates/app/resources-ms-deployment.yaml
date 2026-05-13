@@ -48,7 +48,6 @@ spec:
                   name: resources-ms-config
                   key: SONGS_MS_URL
             - name: SONGS_MS_PORT
-            - name: SONGS_MS_PORT
               valueFrom:
                 configMapKeyRef:
                   name: resources-ms-config

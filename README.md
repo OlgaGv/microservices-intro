@@ -7,6 +7,7 @@ The system includes:
 - **Songs Microservice**
 - **Resources Microservice**
 - **Databases** deployed using StatefulSets
+- **NGINX Ingress Controller** for routing external traffic
 
 Additionally, the project introduces Helm for templating and managing Kubernetes deployments across different environments.
 
@@ -16,7 +17,11 @@ The application includes:
 
 - **Namespace**:
     - Default: `k8s-program`
-    - Configurable via Helm values  
+    - Configurable via Helm values
+- **Ingress**
+  - NGINX Ingress Controller installed via Helm
+  - Routes external traffic to microservices
+  - Uses path-based routing and rewrite-target annotations
 - **Services**:
     - NodePort services for external access to applications
 - **Deployments**:
@@ -48,6 +53,15 @@ Install with default values
 ```helm install msintro ./ms-intro-helm```
 - Namespace: k8s-program
 - Replicas: 2
+
+## Ingress Routing
+Ingress routes requests to internal services using path rules and rewrite annotations.
+
+Examples:
+```text
+http://localhost/api/v1/songs      -> songs-ms
+http://localhost/api/v1/resources  -> resources-ms
+```
 
 ## Project Structure
 ```
@@ -88,11 +102,14 @@ microservices-intro-master/
 │   │   ├── db/
 │   │   │   ├── db-secret.yaml
 │   │   │   ├── resources-db-configmap.yaml
+│   │   │   ├── resources-db-service.yaml
 │   │   │   ├── resources-db-statefulset.yaml
 │   │   │   ├── songs-db-configmap.yaml
 │   │   │   ├── songs-db-job.yaml
+│   │   │   ├── songs-db-service.yaml
 │   │   │   └── songs-db-statefulset.yaml
-│   │   └── _helpers.tpl
+│   │   ├── _helpers.tpl
+│   │   └── ingress.yaml
 │   ├── Chart.yaml
 │   └── values.yaml
 ├── eureka/
